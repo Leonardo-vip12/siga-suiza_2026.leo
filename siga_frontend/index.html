@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>siga_frontend</title>
+  </head>
+  <body>
+    <script>
+      // QR de boleta con el formato anterior (/?boleta=...): ir directo a la página liviana sin cargar el SIGA
+      if (/[?&]boleta=/.test(location.search)) location.replace('/boleta.html' + location.search);
+    </script>
+    <script>
+      // Desregistrar service workers heredados (p. ej. Código Rojo u otros proyectos en localhost)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var r of registrations) {
+            r.unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

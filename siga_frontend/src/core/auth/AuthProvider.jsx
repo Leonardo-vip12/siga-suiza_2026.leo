@@ -1,0 +1,81 @@
+import { useState, useEffect } from 'react';
+import { apiClient, wsClient } from '../api/client';
+import { AuthContext } from './AuthContext';
+import { ChangePasswordModal } from './ChangePasswordModal';
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState([]);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const openPasswordModal = () => setIsPasswordModalOpen(true);
+  const closePasswordModal = () => setIsPasswordModalOpen(false);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await apiClient.getCurrentUser();
+          setUser(userData);
+          setPermissions(userData.permissions || []);
+        } catch {
+          apiClient.clearToken();
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const result = await apiClient.login(email, password);
+      if (result && result.access_token) {
+        apiClient.setToken(result.access_token);
+        setUser(result.user);
+        setPermissions(result.user.permissions || []);
+        return { success: true, user: result.user };
+      }
+      return { success: false, error: 'Credenciales inválidas' };
+    } catch (err) {
+      return { success: false, error: err.message || 'Error de conexión' };
+    }
+  };
+
+  const logout = () => {
+    apiClient.clearToken();
+    wsClient.disconnect();
+    setUser(null);
+    setPermissions([]);
+  };
+
+  const hasPermission = (permission) => {
+    return permissions.includes(permission);
+  };
+
+  const value = {
+    user,
+    loading,
+    permissions,
+    login,
+    logout,
+    hasPermission,
+    isAuthenticated: !!user,
+    openPasswordModal,
+    closePasswordModal,
+    isPasswordModalOpen
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={closePasswordModal} />
+    </AuthContext.Provider>
+  );
+}
