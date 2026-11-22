@@ -32,27 +32,27 @@ app = FastAPI(
 )
 
 # Configuración CORS usando variables de entorno
-    # En producción, el origen viene de la variable VITE_API_URL (que apunta al backend de Render)
-    # En desarrollo, se usan los orígenes localhost habituales
-    frontend_origin = os.getenv("FRONTEND_ORIGIN")
-    if frontend_origin:
-        cors_origins = [frontend_origin]
-    else:
-        cors_origins = [
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:5174",
-            "http://127.0.0.1:5174",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3001",
-        ]
+# En producción, el origen viene de la variable FRONTEND_ORIGIN
+# En desarrollo, se usan los orígenes localhost habituales
+frontend_origin = os.getenv("FRONTEND_ORIGIN")
+if frontend_origin:
+    cors_origins = [frontend_origin]
+else:
+    cors_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ]
 
-    # Solo allow_origin_regex si no hay frontend_origin definido (para desarrollo amplio)
-    allow_origin_regex = None
-    if not frontend_origin:
-        allow_origin_regex = r"https?://.*"
+# Solo allow_origin_regex si no hay frontend_origin definido (para desarrollo amplio)
+allow_origin_regex = None
+if not frontend_origin:
+    allow_origin_regex = r"https?://.*"
 
 # === MIDDLEWARE PARA LOGGING Y TRACING ===
 @app.middleware("http")
