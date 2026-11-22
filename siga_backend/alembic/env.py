@@ -13,18 +13,14 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 # Configuración de Alembic
 config = context.config
 
-# Override DB URL desde variable de entorno
-db_url = os.getenv("DB_URL")
+# Override DB URL desde variable de entorno (Render establece DATABASE_URL automáticamente)
+db_url = os.getenv("DB_URL") or os.getenv("DATABASE_URL")
 if not db_url:
-    user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "john.007")
-    host = os.getenv("DB_HOST", "host.docker.internal")
-    port = os.getenv("DB_PORT", "5432")
-    dbname = os.getenv("DB_NAME", "siga_core")
-    db_url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
-    config.set_main_option("sqlalchemy.url", db_url)
-else:
-    config.set_main_option("sqlalchemy.url", db_url)
+    raise RuntimeError(
+        "No database URL configured. Set DB_URL or DATABASE_URL environment variable "
+        "to connect to PostgreSQL. Do not embed credentials in the code."
+    )
+config.set_main_option("sqlalchemy.url", db_url)
 
 # Convertir asyncpg a psycopg (sync) para migraciones síncronas
 url = config.get_main_option("sqlalchemy.url")

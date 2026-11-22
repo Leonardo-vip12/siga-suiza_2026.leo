@@ -2,6 +2,8 @@ import asyncio
 import json
 from typing import Callable, Dict, List, Optional
 import logging
+from typing import TYPE_CHECKING
+
 from nats.aio.client import Client as NATS
 from nats.errors import TimeoutError, NoServersError
 
@@ -14,7 +16,7 @@ class NATSEventBus:
     """Bus de eventos usando NATS para comunicación entre microservicios"""
     
     def __init__(self):
-        self.nc = NATS()
+        self.nc: Optional[NATS] = None
         self.connected = False
         self.subscriptions: Dict[str, List[Callable]] = {}
         
@@ -50,7 +52,11 @@ class NATSEventBus:
             if not await self.connect():
                 logger.warning("⚠️  Event Bus no conectado - Evento no publicado")
                 return False
-            
+        
+        if self.nc is None:
+            logger.warning("⚠️  Event Bus no tiene conexión NATS - Evento no publicado")
+            return False
+        
         try:
             # Publicar en el subject correspondiente al tipo de evento
             subject = f"events.{event.event_type.value}"
@@ -70,6 +76,9 @@ class NATSEventBus:
             if not await self.connect():
                 return False
         
+        if self.nc is None:
+            return False
+        
         try:
             message = json.dumps(data).encode()
             await self.nc.publish(subject, message)
@@ -84,7 +93,11 @@ class NATSEventBus:
             if not await self.connect():
                 logger.warning("⚠️  Event Bus no conectado - No se puede suscribir")
                 return False
-            
+        
+        if self.nc is None:
+            logger.warning("⚠️  Event Bus no tiene conexión NATS - No se puede suscribir")
+            return False
+        
         try:
             subject = f"events.{event_type}"
             
@@ -122,9 +135,9 @@ class NATSEventBus:
     
     async def request(self, subject: str, data: Dict, timeout: float = 5.0) -> Optional[Dict]:
         """Envía una solicitud y espera respuesta (patrón request-reply)"""
-        if not self.connected:
+        if not self.connected or self.nc is None:
             return None
-            
+        
         try:
             message = json.dumps(data).encode()
             response = await self.nc.request(subject, message, timeout=timeout)
@@ -138,7 +151,7 @@ class NATSEventBus:
     
     async def close(self):
         """Cierra la conexión NATS"""
-        if self.connected:
+        if self.connected and self.nc is not None:
             await self.nc.close()
             self.connected = False
             logger.info("🔌 NATS Event Bus desconectado")

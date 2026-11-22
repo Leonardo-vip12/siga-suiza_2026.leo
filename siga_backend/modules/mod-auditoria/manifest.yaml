@@ -5,10 +5,9 @@ description: "Servicio pasivo de auditoría y trazabilidad"
 author: "SIGA Team"
 
 endpoints:
-  http: "http://mod-auditoria:8007"
-  ws: "ws://mod-auditoria:8007/ws"
-
-health_check: "/health"
+  http: "http://localhost:${PORT:-8007}"
+  ws: "ws://localhost:${PORT:-8007}/ws"
+  health_check: "/health"
 
 dependencies: []
 

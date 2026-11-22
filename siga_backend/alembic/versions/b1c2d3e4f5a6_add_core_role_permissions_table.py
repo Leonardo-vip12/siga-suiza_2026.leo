@@ -20,20 +20,12 @@ def upgrade() -> None:
     if sa.inspect(op.get_bind()).has_table('core_role_permissions'):
         return
     op.create_table('core_role_permissions',
-        sa.Column('role_id', sa.Integer(), nullable=True),
-        sa.Column('permission_id', sa.Integer(), nullable=True),
+        sa.Column('role_id', sa.Integer(), nullable=False),
+        sa.Column('permission_id', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['role_id'], ['core_roles.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['permission_id'], ['core_permissions.id'], ondelete='CASCADE')
+        sa.ForeignKeyConstraint(['permission_id'], ['core_permissions.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('role_id', 'permission_id')
     )
-
-    conn = op.get_bind()
-    conn.execute(sa.text("""
-        CREATE TABLE IF NOT EXISTS core_role_permissions (
-            role_id INTEGER NOT NULL REFERENCES core_roles(id) ON DELETE CASCADE,
-            permission_id INTEGER NOT NULL REFERENCES core_permissions(id) ON DELETE CASCADE,
-            PRIMARY KEY (role_id, permission_id)
-        );
-    """))
 
 def downgrade() -> None:
     op.drop_table('core_role_permissions')

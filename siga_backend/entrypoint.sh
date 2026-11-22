@@ -12,16 +12,16 @@ if [ "$SKIP_MIGRATIONS" != "true" ]; then
     fi
 
     echo "Running database migrations..."
-    if alembic upgrade head; then
-        echo "Migrations applied successfully."
-    else
-        echo "WARNING: alembic upgrade head failed — starting without migrations."
+    if ! alembic upgrade head; then
+        echo "ERROR: alembic upgrade head failed. Aborting startup."
+        exit 1
     fi
+    echo "Migrations applied successfully."
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Starting SIGA Core con Hot Reload..."
-    exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    echo "Starting SIGA Core..."
+    exec uvicorn app.main:app --host 0.0.0.0 --port $PORT
 else
     echo "Starting Module with command: $@"
     exec "$@"

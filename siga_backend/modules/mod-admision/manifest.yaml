@@ -5,9 +5,8 @@ description: "Módulo Piloto de Admisión. Expone JSON de estudiantes admitidos 
 author: "SIGA Team"
 
 endpoints:
-  http: "http://mod-admision:8009"
-
-health_check: "/health"
+  http: "http://localhost:${PORT:-8009}"
+  health_check: "/health"
 
 dependencies: []
 

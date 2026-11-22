@@ -14,19 +14,19 @@ export default defineConfig({
     host: true, // needed for docker
     proxy: {
       '/api': {
-        target: 'http://siga-core:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true
       },
       '/auth': {
-        target: 'http://siga-core:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true
       },
       '/core': {
-        target: 'http://siga-core:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true
       },
       '/ws': {
-        target: 'http://siga-core:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         ws: true
       }
