@@ -54,6 +54,16 @@ allow_origin_regex = None
 if not frontend_origin:
     allow_origin_regex = r"https?://.*"
 
+# Register CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_origin_regex=allow_origin_regex,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # === MIDDLEWARE PARA LOGGING Y TRACING ===
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
