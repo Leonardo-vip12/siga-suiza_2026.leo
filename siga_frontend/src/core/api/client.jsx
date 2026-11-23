@@ -127,12 +127,25 @@ export class SIGAWSClient {
       return;
     }
 
-    this.ws = new WebSocket(`${WS_BASE}/ws`);
+    // Obtener token actualizado desde localStorage justo antes de conectar
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      // No hay token: no intentar conexión anónima
+      this.connected = false;
+      this.trigger('authentication_required');
+      console.warn('🔐 WebSocket connection skipped: no authentication token found');
+      return;
+    }
+
+    // Crear conexión WebSocket con token en la URL
+    const tokenParam = encodeURIComponent(token);
+    this.ws = new WebSocket(`${WS_BASE}/ws?token=${tokenParam}`);
 
     this.ws.onopen = () => {
       console.log('✅ WebSocket connected');
       this.connected = true;
-      this.reconnectAttempts = 0;
+      this.reconnectAttempts = 0; // Reset reconnection attempts on successful connect
       this.trigger('connected');
     };
 
@@ -146,7 +159,7 @@ export class SIGAWSClient {
       this.connected = false;
       this.trigger('disconnected');
       
-      // Auto reconnect (if not intentionally closed)
+      // Auto reconnect (if not intentionally closed and under max attempts)
       if (!this.intentionalDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
         setTimeout(() => this.connect(), 2000 * this.reconnectAttempts);
@@ -156,6 +169,8 @@ export class SIGAWSClient {
     
     this.ws.onerror = (error) => {
       console.error('❌ WebSocket error:', error);
+      this.connected = false;
+      this.trigger('error', error);
     };
   }
 
@@ -164,6 +179,8 @@ export class SIGAWSClient {
       this.intentionalDisconnect = true;
       this.ws.close();
       this.ws = null;
+      // Limpiar listeners para evitar memoria filtro
+      this.listeners = {};
     }
   }
 
