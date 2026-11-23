@@ -1,4 +1,4 @@
-from fastapi import Request, HTTPException, Header
+from fastapi import Request, HTTPException, Header, Query
 from typing import Optional, Dict, Any
 import logging
 
@@ -92,6 +92,29 @@ class SecurityMiddleware:
         except Exception as e:
             logger.error(f"❌ Error en autenticación: {e}")
             raise HTTPException(status_code=500, detail="Error de autenticación")
+
+    async def authenticate_ws_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Autentica token WebSocket y retorna usuario si es válido"""
+        # Para WebSocket, el token puede venir como query parameter
+        # Validación igual que en HTTP API Bearer token
+        if not token:
+            return None
+        
+        try:
+            # Extraer token (pu venir como Bearer o solo el token puro)
+            pure_token = token
+            if token.lower().startswith('bearer '):
+                pure_token = token[7:].strip()
+            
+            async with AsyncSessionLocal() as db:
+                auth_service = AuthService(db)
+                user = await auth_service.get_current_user(pure_token)
+                if not user:
+                    return None
+                return user
+        except Exception as e:
+            logger.error(f"❌ Error en authenticate_ws_token: {e}")
+            return None
 
 # Instancia global (se inicializará en main.py)
 security_middleware: Optional[SecurityMiddleware] = None

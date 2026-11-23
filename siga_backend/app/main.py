@@ -235,16 +235,33 @@ async def module_proxy(request: Request, module_name: str, path: str = "",
 
 # === GATEWAY WEBSOCKET ===
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """Endpoint WebSocket para conexiones en tiempo real"""
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
+    """Endpoint WebSocket para conexiones en tiempo real con autenticación"""
+    # Validar token de autenticación
+    if not token:
+        await websocket.close(code=1008, reason="Token de autenticación requerido")
+        return
+    
+    # Verificar token usando el servicio de seguridad
+    try:
+        user = await sm_module.security_middleware.authenticate_ws_token(token)
+        if not user:
+            await websocket.close(code=1008, reason="Token inválido o expirado")
+            return
+    except Exception as e:
+        logger.error(f"❌ Error validando token WebSocket: {e}")
+        await websocket.close(code=1008, reason="Error en validación de token")
+        return
+    
     client_id = f"client_{uuid.uuid4().hex[:8]}"
     
-    await ws_gateway.connect(websocket, client_id)
+    await ws_gateway.connect(websocket, client_id, user=user)
     
     try:
         while True:
             # Escuchar mensajes del cliente
             data = await websocket.receive_text()
+            # Procesar mensaje recibido
             logger.info(f"📨 WS [{client_id}]: {data}")
             
             # Procesar mensaje (ejemplo simple)
@@ -255,6 +272,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 await ws_gateway.broadcast(f"Client {client_id}: {data}")
                 
     except WebSocketDisconnect:
+        logger.info(f"🔌 Cliente {client_id} desconectado")
+    except Exception as e:
+        logger.error(f"❌ Error en WebSocket {client_id}: {e}")
+    finally:
         ws_gateway.disconnect(client_id)
         await ws_gateway.broadcast(f"Client {client_id} disconnected")
 
