@@ -80,6 +80,24 @@ async def add_request_id(request: Request, call_next):
 # === INCLUIR COMPONENTES DEL CORE ===
 app.include_router(module_runtime.get_module_router())
 
+# === INCLUIR RUTAS DE MÓDULOS REGISTRADOS ===
+# Incluir routers de módulos descubiertos para que sus endpoints estén disponibles
+for module_name, module_info in module_runtime.modules.items():
+    if module_info.status.value == "healthy" and module_info.endpoints.get("http"):
+        try:
+            # Importar el router del módulo dinámicamente
+            module_main = __import__(
+                f"siga_backend.modules.{module_name}.main",
+                fromlist=["router"]
+            )
+            if hasattr(module_main, "router") and module_main.router:
+                app.include_router(module_main.router, prefix=f"/api/{module_name}", tags=[module_name])
+                logger.info(f"✅ Router del módulo {module_name} incluido en la aplicación principal")
+        except ImportError as e:
+            logger.warning(f"⚠️  No se pudo importar router del módulo {module_name}: {e}")
+        except Exception as e:
+            logger.warning(f"⚠️  Error incluyendo router del módulo {module_name}: {e}")
+
 # === RUTAS DEL CORE ===
 @app.get("/")
 async def root():
