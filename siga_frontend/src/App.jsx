@@ -16,7 +16,7 @@ import { AdminDashboard } from './modules/admin/AdminDashboard';
 import { TramitesDashboard } from './modules/academic/TramitesDashboard';
 import { FinancesDashboard } from './modules/finances/FinancesDashboard';
 import { CoordinatorAcademic } from './modules/academic/CoordinatorAcademic';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function AppContent() {
   const { isAuthenticated, loading, user } = useAuth();
