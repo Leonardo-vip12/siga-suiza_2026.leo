@@ -3,6 +3,7 @@ import { ToastProvider } from './core/ui/ToastContext';
 import { ConfirmProvider } from './core/ui/ConfirmModal';
 import { useAuth } from './core/auth/useAuth';
 import { LoginForm } from './core/auth/LoginForm';
+import { wsClient } from './core/api/client';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { Dashboard } from './modules/dashboard/Dashboard';
 import { AcademicDashboard } from './modules/academic/AcademicDashboard';
@@ -21,7 +22,18 @@ function AppContent() {
   const { isAuthenticated, loading, user } = useAuth();
   const [currentView, setCurrentView] = useState(null);
   const [prevUser, setPrevUser] = useState(user);
-
+  
+  // Connect WebSocket after user authentication
+  useEffect(() => {
+    if (isAuthenticated && wsClient) {
+      wsClient.connect();
+    }
+    // Cleanup on unmount or auth state change
+    return () => {
+      wsClient.disconnect();
+    }
+  }, [isAuthenticated, user]);
+  
   const getUserRoles = () => {
     if (user?.is_superuser) return ['superadmin'];
     let roles = [];
