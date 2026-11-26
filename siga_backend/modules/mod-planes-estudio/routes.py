@@ -186,6 +186,8 @@ async def importar_plan_minedu(
     file: UploadFile = File(...), 
     codigo: Optional[str] = Form(None),
     nombre: Optional[str] = Form(None),
+    programa_codigo: Optional[str] = Form(None),
+    programa_nombre: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db)
 ):
     if not file.filename.endswith(('.xlsx', '.xls')):
@@ -202,6 +204,10 @@ async def importar_plan_minedu(
         data["codigo"] = codigo.strip()
     if nombre and nombre.strip():
         data["nombre"] = nombre.strip()
+    if programa_codigo and programa_codigo.strip():
+        data["codigo"] = programa_codigo.strip()
+    if programa_nombre and programa_nombre.strip():
+        data["nombre"] = programa_nombre.strip()
 
     # Verificar si el código ya existe
     result = await db.execute(select(PlanEstudio).where(PlanEstudio.codigo == data["codigo"]))

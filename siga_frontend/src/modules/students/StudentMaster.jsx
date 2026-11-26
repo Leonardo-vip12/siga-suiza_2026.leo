@@ -914,8 +914,12 @@ export function StudentMaster() {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
 
-      if (!resAdmision.ok) throw new Error("No se pudo conectar con Admisión Piloto");
+      if (!resAdmision.ok) throw new Error("No se pudo conectar con el módulo de Admisión");
+
       let admisionData = await resAdmision.json();
+      if (!admisionData || !admisionData.admitidos) {
+        throw new Error("La respuesta del módulo de Admisión no tiene datos de ingresantes");
+      }
 
       if (admisionData.admitidos.length === 0) {
         toast.info("No se encontraron ingresantes para el programa seleccionado.");
@@ -929,7 +933,7 @@ export function StudentMaster() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(admisionData)
+        body: JSON.stringify({admitidos: admisionData.admitidos})
       });
 
       if (resIngesta.ok) {
