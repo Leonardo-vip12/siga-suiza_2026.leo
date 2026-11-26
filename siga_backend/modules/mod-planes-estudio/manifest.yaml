@@ -5,7 +5,7 @@ description: Gestión de planes de estudio según estándar MINEDU
 author: "SIGA Team"
 
 endpoints:
-  http: "http://localhost:${PORT:-8005}"
+  http: "http://localhost:${PORT:-8002}"
 
 health_check: "/health"
 
