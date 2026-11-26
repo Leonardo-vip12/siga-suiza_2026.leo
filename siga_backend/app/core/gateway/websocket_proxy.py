@@ -10,7 +10,7 @@ class WebSocketGateway:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
     
-    async def connect(self, websocket: WebSocket, client_id: str):
+    async def connect(self, websocket: WebSocket, client_id: str, user: Dict = None):
         """Acepta conexión WebSocket"""
         await websocket.accept()
         self.active_connections[client_id] = websocket

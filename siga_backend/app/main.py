@@ -33,11 +33,14 @@ app = FastAPI(
 
 # Configuración CORS usando variables de entorno
 # En producción, el origen viene de la variable FRONTEND_ORIGIN
-# En desarrollo, se usan los orígenes localhost habituales
+# Configuración CORS usando variables de entorno
+# En Render, la variable FRONTEND_ORIGIN viene definida automáticamente
+# o se usa el patrón para aceptar todos los dominios Render
 frontend_origin = os.getenv("FRONTEND_ORIGIN")
 if frontend_origin:
     cors_origins = [frontend_origin]
 else:
+    # En desarrollo usamos localhost; en producción Render inyecta el dominio
     cors_origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
@@ -48,11 +51,16 @@ else:
         "http://localhost:3001",
         "http://127.0.0.1:3001",
     ]
+    # Agregamos dominio de Render si está disponible via entorno
+    render_domain = os.getenv("RENDER_EXTERNAL_URL")
+    if render_domain and render_domain not in cors_origins:
+        cors_origins.append(render_domain)
 
-# Solo allow_origin_regex si no hay frontend_origin definido (para desarrollo amplio)
+# allow_origin_regex para dominios dinámicos de Render
 allow_origin_regex = None
 if not frontend_origin:
-    allow_origin_regex = r"https?://.*"
+    # Aceptar cualquier dominio de Render (.render.com) y localhost
+    allow_origin_regex = r"https?://(localhost|127\.0\.0\.1|[a-z0-9-]+\.render\.com)(:\d+)?"
 
 # Register CORS middleware
 app.add_middleware(

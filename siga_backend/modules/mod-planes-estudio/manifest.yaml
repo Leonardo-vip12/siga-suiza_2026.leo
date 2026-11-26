@@ -1,14 +1,22 @@
-name: mod-planes-estudio
-version: 1.0.0
-api_version: v1
+name: "mod-planes-estudio"
+version: "1.0.0"
+api_version: "v1"
 description: Gestión de planes de estudio según estándar MINEDU
-health_check: /health
+author: "SIGA Team"
+
+endpoints:
+  http: "http://localhost:${PORT:-8005}"
+
+health_check: "/health"
+
 events:
   publishes: []
   subscribes: []
+
 permissions:
   - mod-planes-estudio:read
   - mod-planes-estudio:write
   - mod-planes-estudio:admin
+
 config:
   database: mod_planes_estudio

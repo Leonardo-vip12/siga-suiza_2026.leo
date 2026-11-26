@@ -26,13 +26,20 @@ if [ "$SKIP_MIGRATIONS" != "true" ]; then
     alembic upgrade head || echo "⚠️ Alembic upgrade head falló o fue omitido — continuando..."
 fi
 
-export SIGA_MODULE_USUARIOS_URL="http://127.0.0.1:8001"
-export SIGA_MODULE_PLANES_ESTUDIO_URL="http://127.0.0.1:8002"
-export SIGA_MODULE_PROGRAMAS_ESTUDIO_URL="http://127.0.0.1:8005"
-export SIGA_MODULE_GESTION_ACADEMICA_URL="http://127.0.0.1:8006"
-export SIGA_MODULE_AUDITORIA_URL="http://127.0.0.1:8007"
-export SIGA_MODULE_EVALUACION_URL="http://127.0.0.1:8008"
-export SIGA_MODULE_ADMISION_URL="http://127.0.0.1:8009"
+# Módulos: usar las URLs desde variables de entorno si están definidas,
+# sino caer back a localhost para deployments donde todos los servicios
+# corren en el mismo host (Render, Railway desarrollo).
+# La variable SIGA_MODULE_URL_BASE se puede setear para sobreescribir el prefijo base.
+MODULE_URL_BASE="${SIGA_MODULE_URL_BASE:-http://localhost}"
+
+# Si vienen definidas las URLs individuales, úsalas; si no, construir con localhost
+SIGA_MODULE_USUARIOS_URL="${SIGA_MODULE_USUARIOS_URL:-${MODULE_URL_BASE}:8001}"
+SIGA_MODULE_PLANES_ESTUDIO_URL="${SIGA_MODULE_PLANES_ESTUDIO_URL:-${MODULE_URL_BASE}:8002}"
+SIGA_MODULE_PROGRAMAS_ESTUDIO_URL="${SIGA_MODULE_PROGRAMAS_ESTUDIO_URL:-${MODULE_URL_BASE}:8005}"
+SIGA_MODULE_GESTION_ACADEMICA_URL="${SIGA_MODULE_GESTION_ACADEMICA_URL:-${MODULE_URL_BASE}:8006}"
+SIGA_MODULE_AUDITORIA_URL="${SIGA_MODULE_AUDITORIA_URL:-${MODULE_URL_BASE}:8007}"
+SIGA_MODULE_EVALUACION_URL="${SIGA_MODULE_EVALUACION_URL:-${MODULE_URL_BASE}:8008}"
+SIGA_MODULE_ADMISION_URL="${SIGA_MODULE_ADMISION_URL:-${MODULE_URL_BASE}:8009}"
 
 echo "⚙️ Levantando 7 microservicios internos..."
 python -m uvicorn main:app --host 127.0.0.1 --port 8001 --app-dir modules/mod-usuarios &
