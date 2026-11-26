@@ -894,7 +894,7 @@ export function StudentMaster() {
     }
   };
 
-  const handleSincronizar = async () => {
+const handleSincronizar = async () => {
     if (userRole !== 'superadmin' && userRole !== 'admin') {
       toast.error("Solo el Super Admin puede ejecutar la ingesta de Admisión.");
       return;
@@ -917,9 +917,6 @@ export function StudentMaster() {
       if (!resAdmision.ok) throw new Error("No se pudo conectar con el módulo de Admisión");
 
       let admisionData = await resAdmision.json();
-      if (!admisionData || !admisionData.admitidos) {
-        throw new Error("La respuesta del módulo de Admisión no tiene datos de ingresantes");
-      }
 
       if (admisionData.admitidos.length === 0) {
         toast.info("No se encontraron ingresantes para el programa seleccionado.");
@@ -933,7 +930,7 @@ export function StudentMaster() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({admitidos: admisionData.admitidos})
+        body: JSON.stringify(admisionData)
       });
 
       if (resIngesta.ok) {
