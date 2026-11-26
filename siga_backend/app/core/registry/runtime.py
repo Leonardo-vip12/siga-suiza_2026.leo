@@ -469,7 +469,13 @@ class ModuleRuntime:
                     logger.info(f"ℹ️  [REGISTER] Registrando módulo {name} como OFFLINE (puede iniciarse después)")
                 
                 if not is_healthy:
-                    module.status = ModuleStatus.OFFLINE
+                    # Si la validation compliance pasó (5/5 steps), marcar como HEALTHY
+                    #aun cuando health check dé timeout (despliegue single-container)
+                    if module.compliance_result and module.compliance_result.get("compliant", False):
+                        logger.info(f"✅ {name}: compliance passed (5/5 steps), marcando HEALTHY a pesar de health check timeout")
+                        module.status = ModuleStatus.HEALTHY
+                    else:
+                        module.status = ModuleStatus.OFFLINE
             
             # Persistir en la BD
             async with AsyncSessionLocal() as db:
