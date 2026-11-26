@@ -6,7 +6,7 @@ import os
 import uvicorn
 from contextlib import asynccontextmanager
 from io import BytesIO
-import pandas as pd
+
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -122,6 +122,7 @@ async def root():
 
 
 def sanitize_row(row):
+    import pandas as pd
     result = {}
     for k, v in row.items():
         if pd.isna(v):
@@ -135,6 +136,7 @@ def sanitize_row(row):
 from starlette.concurrency import run_in_threadpool
 
 def parse_excel_sync(contents: bytes):
+    import pandas as pd
     excel_data = pd.ExcelFile(BytesIO(contents))
     
     sheet_names_lower = [s.lower().strip() for s in excel_data.sheet_names]

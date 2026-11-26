@@ -13,11 +13,11 @@ except ImportError:
 
 import os
 
-NATS_URL = os.getenv("NATS_URL", "nats://localhost:4222")
+NATS_URL = os.getenv("NATS_URL", "")
 
 async def outbox_worker():
     nc = None
-    if NATS_AVAILABLE:
+    if NATS_AVAILABLE and NATS_URL:
         nc = NATS()
         try:
             await nc.connect(NATS_URL)

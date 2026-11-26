@@ -18,7 +18,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Dict, List, Optional
 
-import pandas as pd
+
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
@@ -140,6 +140,7 @@ def _resolver_columnas(df_columns):
 
 
 def _limpiar(valor):
+    import pandas as pd
     if valor is None:
         return None
     if isinstance(valor, float) and pd.isna(valor):
@@ -151,6 +152,7 @@ def _limpiar(valor):
 
 
 def parse_excel_ingresantes(contenido: bytes) -> List[dict]:
+    import pandas as pd
     excel = pd.ExcelFile(BytesIO(contenido))
     hoja = excel.sheet_names[0]
     df = pd.read_excel(excel, sheet_name=hoja)
