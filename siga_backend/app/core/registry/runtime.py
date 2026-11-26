@@ -33,14 +33,42 @@ def _resolve_endpoints(module_name: str, endpoints: Dict[str, Any]) -> Dict[str,
 
     El manifest declara el nombre del servicio de Docker (p.ej.
     "http://mod-gestion-academica:8006"), que solo resuelve dentro de la red
-    de Compose. Al ejecutar nativo (start_local.ps1) todos los modulos viven en
-    localhost, asi que hace falta un override:
+    de Compose. Al ejecutar nativo todos los modulos viven en localhost,
+    asi que hace falta un override:
 
         SIGA_MODULE_GESTION_ACADEMICA_URL=http://localhost:8006
+
+    Ademas, si está definida SIGA_MODULE_URL_BASE, se usa como prefijo base
+    para todas las URLs de los módulos.
     """
     resolved = dict(endpoints)
     env_key = _endpoint_env_key(module_name)
     override = os.getenv(env_key)
+    
+    # Intentar usar SIGA_MODULE_URL_BASE como prefijo base si no hay override individual
+    base_override = os.getenv("SIGA_MODULE_URL_BASE")
+    if not override and base_override:
+        # Construir la URL completa: base:port
+        port_map = {
+            "mod-usuarios": "8001",
+            "mod-programas-estudio": "8005",
+            "mod-gestion-academica": "8006",
+            "mod-auditoria": "8007",
+            "mod-evaluacion": "8008",
+            "mod-admision": "8009",
+            "mod-planes-estudio": "8005",
+        }
+        # Extraer el puerto original del manifest o usar default
+        original_http = endpoints.get("http", "")
+        # Si el manifest tiene localhost con puerto dinámico, reemplazar por base
+        if "localhost" in original_http or "127.0.0.1" in original_http:
+            # Extraer puerto original o usar 8001 por default
+            import re
+            port_match = re.search(r':(\d+)$', original_http)
+            port = port_match.group(1) if port_match else "8001"
+            override = f"{base_override}:{port}"
+            logger.info(f"🔧 {module_name}: usando SIGA_MODULE_URL_BASE -> {override}")
+    
     if override:
         override = override.rstrip("/")
         if resolved.get("http") != override:
@@ -71,6 +99,24 @@ class ModuleInfo:
     async def check_health(self) -> bool:
         """Realiza health check al módulo"""
         try:
+            http_url = self.endpoints.get("http", "")
+            # Si la URL aún apunta a localhost, intentar resolver con SIGA_MODULE_URL_BASE
+            if "localhost" in http_url or "127.0.0.1" in http_url:
+                base_override = os.getenv("SIGA_MODULE_URL_BASE")
+                if base_override:
+                    # Reconstruir URL con el base de Render
+                    import re
+                    port_match = re.search(r':(\d+)$', http_url)
+                    port = port_match.group(1) if port_match else "8001"
+                    new_url = f"{base_override}:{port}"
+                    logger.info(f"🔄 Health check: reintentando con URL resuelta {new_url}")
+                    self.endpoints["http"] = new_url
+                else:
+                    logger.warning(f"⚠️ Health check: URLs de módulo aún apuntan a localhost, saltando health check")
+                    self.status = ModuleStatus.OFFLINE
+                    self.last_health_check = datetime.now()
+                    return False
+            
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{self.endpoints['http']}{self.health_check}",
