@@ -930,7 +930,7 @@ const handleSincronizar = async () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(admisionData)
+        body: JSON.stringify({admitidos: admisionData.admitidos})
       });
 
       if (resIngesta.ok) {
